@@ -1,6 +1,6 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { criarPluginAutocab } from '../core.mjs';
-import { criarBancoSupabase } from '../server/supabase.mjs';
+import { criarBancoSupabase, ErroSupabase } from '../server/supabase.mjs';
 import { executarCiclo } from '../server/ciclo.mjs';
 
 function autorizado(cabecalho, segredo) {
@@ -45,8 +45,10 @@ export function criarRotaCron({ ambiente = process.env, criarBanco = criarBancoS
         }
       }
       return resposta.status(200).json({ ciclos });
-    } catch {
-      return resposta.status(502).json({ erro: 'Falha no ciclo. Verifique a configuração, as tabelas do Supabase e a disponibilidade da Autocab.', ciclo });
+    } catch (erro) {
+      const detalhe = erro instanceof ErroSupabase ? { codigo: erro.codigo, erro: erro.message } : { codigo: 'CICLO_FALHOU', erro: 'Falha ao executar o ciclo Autocab.' };
+      console.error('Falha no cron', { ciclo, ...detalhe });
+      return resposta.status(502).json({ ...detalhe, ciclo });
     } finally {
       if (trava) {
         try { await banco.liberar(ciclo, cursor); } catch { console.error('Não foi possível liberar a trava; ela expira automaticamente.'); }

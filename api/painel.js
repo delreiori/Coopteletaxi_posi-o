@@ -1,5 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
-import { criarBancoSupabase } from '../server/supabase.mjs';
+import { criarBancoSupabase, ErroSupabase } from '../server/supabase.mjs';
 
 export function criarRotaPainel({ ambiente = process.env, criarBanco = criarBancoSupabase } = {}) {
   return async function painel(requisicao, resposta) {
@@ -18,8 +18,10 @@ export function criarRotaPainel({ ambiente = process.env, criarBanco = criarBanc
       const banco = criarBanco(ambiente);
       const [eventos, estados] = await Promise.all([banco.consultarEventos(), banco.consultarEstado()]);
       return resposta.status(200).json({ eventos, estado: estados[0] ?? null, consultadoEm: new Date().toISOString() });
-    } catch {
-      return resposta.status(502).json({ erro: 'Não foi possível consultar o Supabase. Verifique as variáveis e as tabelas.' });
+    } catch (erro) {
+      const detalhe = erro instanceof ErroSupabase ? { codigo: erro.codigo, erro: erro.message } : { codigo: 'PAINEL_FALHOU', erro: 'Não foi possível consultar o Supabase.' };
+      console.error('Falha no painel', detalhe);
+      return resposta.status(502).json(detalhe);
     }
   };
 }

@@ -25,3 +25,11 @@ test('consultas Supabase usam GET limitado e não enviam corpo', async () => {
  });
  await banco.consultarEventos(); await banco.consultarEstado();
 });
+
+test('URL incorreta retorna diagnóstico seguro antes de enviar credenciais', () => {
+ assert.throws(() => criarBancoSupabase({ ...ambiente, SUPABASE_URL: 'postgresql://usuario:segredo@host/banco' }, () => assert.fail()), erro => erro.codigo === 'URL_INVALIDA' && !erro.message.includes('segredo'));
+});
+test('schema ausente identificado sem revelar resposta arbitrária', async () => {
+ const banco = criarBancoSupabase(ambiente, async () => new Response(JSON.stringify({ code: 'PGRST202', message: 'dados privados' }), { status: 404 }));
+ await assert.rejects(banco.adquirir('teste'), erro => erro.codigo === 'SCHEMA_AUSENTE' && !erro.message.includes('privados'));
+});
