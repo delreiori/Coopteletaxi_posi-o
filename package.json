@@ -1,0 +1,12 @@
+{
+  "name": "coopteletaxi-posicao",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": "./core.mjs",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test core.test.mjs",
+    "consultar": "node --env-file=.env consultar.mjs"
+  }
+}
