@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coopteletaxi · Monitor de posições</title>
+<link rel="stylesheet" href="/painel.css"><script src="/painel.js" defer></script>
+</head>
+<body><main>
+<header><p class="marca">COOPTELETAXI / OPERAÇÃO</p><h1>Monitor de posições</h1><p>Histórico de zona e fila · somente consulta</p></header>
+<section class="acesso"><form id="acesso"><label for="token">Token do painel</label><div class="linha"><input id="token" type="password" required autocomplete="off" placeholder="Digite seu token"><button>Conectar</button><button type="button" id="sair" hidden>Sair</button></div></form><p>Atualização automática a cada 10 segundos.</p></section>
+<p id="mensagem" role="status">Conecte para visualizar os registros.</p>
+<div class="indicadores"><section><span>Último ciclo registrado</span><strong id="ultimo">—</strong></section><section><span>Veículos verificados no último ciclo</span><strong id="verificados">—</strong></section><section><span>Plots confirmados nos últimos 500 registros</span><strong id="confirmados">—</strong></section><section><span>Erros e pendências nos últimos 500 registros</span><strong id="atencao">—</strong></section></div>
+<section class="dados"><div class="titulo"><h2>Alterações de zona e fila</h2><label>Filtrar veículo <input id="filtro" type="search" placeholder="ID do veículo"></label></div><div class="rolagem"><table><thead><tr><th>Horário</th><th>Veículo</th><th>Zona anterior → destino</th><th>Posição enviada</th><th>Resultado</th><th>Detalhes</th></tr></thead><tbody id="alteracoes"></tbody></table></div><p>IDs da Autocab. A posição na fila pode avançar após o envio.</p></section>
+<section class="dados"><h2>Ciclos de consulta</h2><div class="rolagem"><table><thead><tr><th>Horário</th><th>Verificados</th><th>Enviados</th><th>Erros</th><th>Resultado</th></tr></thead><tbody id="ciclos"></tbody></table></div></section>
+<footer>Horários de Brasília · até 500 registros recentes · segunda passagem por volta de 30 segundos quando a primeira termina a tempo.</footer>
+</main></body></html>

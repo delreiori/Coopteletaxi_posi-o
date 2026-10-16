@@ -55,8 +55,8 @@ async function corrigirVeiculo(api, banco, ciclo, estado, veiculos, zonas, posic
   return true;
 }
 
-export async function executarCiclo({ api, banco, ciclo, cursor = 0, agora = Date.now }) {
-  const limite = agora() + 220000;
+export async function executarCiclo({ api, banco, ciclo, cursor = 0, agora = Date.now, prazoFinal }) {
+  const limite = Math.min(agora() + 220000, prazoFinal ?? Infinity);
   const [estados, veiculos, zonas, posicoes, pendentes] = await Promise.all([
     api.consultarEstadosVeiculos(), api.consultarVeiculos(), api.consultarZonas(), api.consultarPosicoesGps(), banco.pendentes(),
   ]);

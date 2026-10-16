@@ -46,3 +46,28 @@ test('plot pendente impede reenvio', async () => {
  const banco = { pendentes: async () => [{ veiculo_id: 1, zona_destino: 2 }], registrar: async () => {} };
  assert.equal((await executarCiclo({ api, banco, ciclo: 'teste' })).enviados, 0);
 });
+
+test('segunda passagem inicia em 30 segundos e mantém a trava', async () => {
+ let tempo = 0; let liberou = false; const inicios = []; const cursores = [];
+ const resposta = respostaTeste();
+ await criarRotaCron({ ambiente, agora: () => tempo, esperar: async ms => { tempo += ms; },
+ criarBanco: () => ({ adquirir: async () => ({ cursor: 0 }), liberar: async () => { liberou = true; } }),
+ criarApi: () => ({}), executar: async ({ cursor, prazoFinal }) => {
+  assert.equal(liberou, false); assert.equal(prazoFinal, 220000);
+  inicios.push(tempo); cursores.push(cursor); tempo += 5000;
+  return { cursor: 12, verificados: 12 };
+ } })({ method: 'GET', headers: { authorization: 'Bearer segredo' } }, resposta);
+ assert.deepEqual(inicios, [0, 30000]); assert.deepEqual(cursores, [0, 12]);
+ assert.equal(liberou, true); assert.equal(resposta.corpo.ciclos.length, 2);
+ assert.notEqual(resposta.corpo.ciclos[0].ciclo, resposta.corpo.ciclos[1].ciclo);
+});
+
+test('passagem lenta não dispara segundo ciclo', async () => {
+ let tempo = 0;
+ const resposta = respostaTeste();
+ await criarRotaCron({ ambiente, agora: () => tempo, esperar: async () => assert.fail(),
+ criarBanco: () => ({ adquirir: async () => ({ cursor: 0 }), liberar: async () => {} }),
+ criarApi: () => ({}), executar: async () => { tempo = 31000; return { cursor: 1 }; }
+ })({ method: 'GET', headers: { authorization: 'Bearer segredo' } }, resposta);
+ assert.equal(resposta.corpo.ciclos.length, 1);
+});

@@ -67,8 +67,16 @@ A rota executa plots reais: consulta veículos, estados, GPS e zonas; protege pe
 
 Os eventos ficam em `autocab_eventos` no Supabase. `pendente` é gravado antes do POST e só vira `confirmado` ao observar a zona de destino. Uma pendência impede reenvio automático; se permanecer, verifique a Autocab antes de resolver manualmente o registro. A confirmação é de zona, não da permanência da posição na fila. A trava global expira em 360 segundos e a função tem duração máxima de 300 segundos. Use um projeto Supabase dedicado por integração.
 
-O cron NÃO chama o PATCH de GPS: precisa de coordenadas novas e Bearer para isso. Ele corrige o plot com o GPS disponível. Não há painel web neste repositório. A raiz do site pode retornar 404; a rota publicada é /api/cron. Ao abri-la sem o segredo, o esperado é 401 JSON.
+O cron NÃO chama o PATCH de GPS: precisa de coordenadas novas e Bearer para isso. Ele corrige o plot com o GPS disponível. A raiz do site apresenta um painel somente de consulta. Ao abri-la sem o segredo, o esperado é 401 JSON.
 
 Códigos: 405 método inválido; 401 sem autorização; 503 configuração incompleta; 502 falha no ciclo; 200 com contadores ou ciclo ignorado por concorrência. Erros por veículo aparecem no contador `erros` e nos registros; não interrompem os demais quando o banco está disponível.
 
 Testes locais usam serviços simulados, sem alterar veículos reais. O SQL precisa ser aplicado e a conexão de produção verificada no seu ambiente.
+
+## Painel de consulta e segunda passagem
+
+Acesse a raiz do domínio de Production. O painel lê `/api/painel`, atualiza a cada 10 segundos e mostra os últimos 500 eventos, com filtro por ID do veículo. Nunca chama o cron nem modifica os veículos. O token fica só na memória da aba; ao recarregar, conecte novamente.
+
+Para conectar, use `PANEL_TOKEN` se configurado na Vercel; caso contrário, use o `CRON_SECRET` já existente. Recomenda-se definir PANEL_TOKEN separado para compartilhar somente leitura. Nunca compartilhe CRON_SECRET com quem não deve poder acionar a rotina. Não é necessário modificar o SQL já instalado.
+
+O cron da Vercel continua a cada minuto. Se a primeira passagem terminar antes de 30 segundos desde o início da chamada, a função aguarda até essa marca e tenta uma segunda passagem, mantendo a mesma trava. Se a primeira demorar, ou a espera ultrapassar 45 segundos, não inicia essa segunda passagem. As duas usam o mesmo limite absoluto de planejamento, preservando margem para concluir chamadas e liberar a trava antes do timeout. Portanto, não há garantia de ciclos a cada 30 segundos em cargas altas. O JSON do cron retorna uma lista `ciclos` com um ou dois resumos. A espera mantém a função ativa e pode aumentar seu consumo na Vercel.
